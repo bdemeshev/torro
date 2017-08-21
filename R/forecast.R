@@ -147,6 +147,8 @@ forecast_ets <- function(y, h = 1, model = NULL, ...) {
 #' @param struct type of VAR-lasso
 #' @param gran granularity vector, If gran = (a, b) then cross-validation checks b values form lambda to lambda/a.
 #' @param model estimated VAR-lasso model. If missing will be estimated automatically.
+#' @param scale logical, If TRUE then time series are scaled to mean = 0 and sd = 1 before estimation.
+#' Forecasts are scaled back to original mean and sd.
 #' @param ... further arguments passed to \code{cv.BigVAR} function
 #' @param type fast or honest cross-validation. 
 #' honest: cross-validation is repeated for each h, so h should be a vector.
@@ -158,20 +160,28 @@ forecast_ets <- function(y, h = 1, model = NULL, ...) {
 #' data(rus_macro)
 #' y_small <- rus_macro[, c("cpi", "employment", "m2")]
 #' var_lasso_forecast <- forecast_var_lasso(y_small, h = 2)
-forecast_var_lasso <- function(y, h = 1, model = NULL, p = 1, 
+forecast_var_lasso <- function(y, h = 1, model = NULL, p = 1, scale = TRUE,
                                struct = "OwnOther", gran = c(25, 10),
                                type = c("fast", "honest"), h_cv = 1, ...) {
   type <- match.arg(type)
   
-  # var_lasso fails! for time series!
+  # var_lasso fails for multivariate time series! 
+  # so we transform them to plain matrix
+  # see https://github.com/wbnicholson/BigVAR/issues/2
   y_matrix <- as.matrix(y)
+  
+  if (scale) {
+    old_scales <- get_scales(y_matrix)
+    y_matrix <- scale_to(y_matrix)
+  }
+  
   m <- ncol(y_matrix)
   
   forecast_matrix <- matrix(NA, nrow = max(h), ncol = m)    
   
   if (type == "fast") {
     if (is.null(model)) {
-      model <- estimate_var_lasso(y, h = h_cv, p = p, 
+      model <- estimate_var_lasso(y_matrix, h = h_cv, p = p, 
                                   struct = struct, gran = gran, ...)
     }
     
@@ -195,12 +205,12 @@ forecast_var_lasso <- function(y, h = 1, model = NULL, p = 1,
     # estimate if no models are estimated
     if (length(model) == 0) {
       if (length(h) == 1) {
-        model <- estimate_var_lasso(y, h = h, p = p, 
+        model <- estimate_var_lasso(y_matrix, h = h, p = p, 
                                     struct = struct, gran = gran, ...)
       } else {
         model <- list()
         for (i in 1:length(h)) {
-          model[[i]] <- estimate_var_lasso(y, h = h[i], p = p, 
+          model[[i]] <- estimate_var_lasso(y_matrix, h = h[i], p = p, 
                                            struct = struct, gran = gran, ...)
         }
       }
@@ -223,9 +233,15 @@ forecast_var_lasso <- function(y, h = 1, model = NULL, p = 1,
       # а для n.ahead > 1 возвращает столбец
       cat("  forecast for h = ", h[i], " done.\n")
     }
-    }
+  }
   
   colnames(forecast_matrix) <- colnames(y_matrix)
+  
+  # scale forecasts back to original scales
+  if (scale) {
+    forecast_matrix <- scale_to(forecast_matrix, old_scales, dirty_scale = TRUE)
+  }
+  
   mforecast <- matrix_to_mforecast(forecast_matrix, y, method = "BigVAR")
   mforecast$model <- model
   return(mforecast)
@@ -370,5 +386,6 @@ forecast_tvp_primiceri <- function(y, h = 1, model = NULL, level = c(80, 95), ..
   class(mforecast) <- "mforecast"
   return(mforecast)
 }
+
 
 

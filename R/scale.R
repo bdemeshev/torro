@@ -30,13 +30,15 @@ get_scales <- function(y) {
 #' 
 #' @param y multivariate time series to be scales
 #' @param mu_sd tibble with three columns: variable, mean, sd
+#' @param dirty_scale logical, if TRUE then the series is assumed having mean = 0 and sd = 1,
+#' and is just multiplied by sd and augmented by mean.
 #' @return scaled mutlivatiate time series
 #' @export
 #' @examples 
 #' scale_to(cars)
 #' data(rus_macro)
 #' scale_to(rus_macro)
-scale_to <- function(y, mu_sd = NULL) {
+scale_to <- function(y, mu_sd = NULL, dirty_scale = FALSE) {
   # black magic to remove NOTE in R CMD check
   row_number <- variable <- value <- sd <- mu <- .id <-  NULL 
   
@@ -49,8 +51,12 @@ scale_to <- function(y, mu_sd = NULL) {
   y_long <- reshape2::melt(y_tibble, id.vars = ".id")
   y_long <- dplyr::mutate(y_long, variable = as.character(variable))
   y_long <- dplyr::left_join(y_long, mu_sd, by = "variable")
-  y_long <- dplyr::mutate(dplyr::group_by(y_long, variable),
-                          new_value = scale(value) * sd + mu)
+  y_long <- dplyr::group_by(y_long, variable)
+  if (dirty_scale) {
+    y_long <- dplyr::mutate(y_long, new_value = value * sd + mu)
+  } else {
+    y_long <- dplyr::mutate(y_long, new_value = scale(value) * sd + mu)
+  }
   y_scaled <- reshape2::dcast(y_long, .id ~ variable, value.var = "new_value")
   y_scaled <-  dplyr::select(y_scaled, -.id)
 

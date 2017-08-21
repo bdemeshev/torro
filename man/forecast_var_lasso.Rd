@@ -4,8 +4,9 @@
 \alias{forecast_var_lasso}
 \title{Forecast using VAR-lasso model}
 \usage{
-forecast_var_lasso(y, h = 1, model = NULL, p = 1, struct = "OwnOther",
-  gran = c(25, 10), type = c("fast", "honest"), h_cv = 1, ...)
+forecast_var_lasso(y, h = 1, model = NULL, p = 1, scale = TRUE,
+  struct = "OwnOther", gran = c(25, 10), type = c("fast", "honest"),
+  h_cv = 1, ...)
 }
 \arguments{
 \item{y}{multivariate time series}
@@ -15,6 +16,9 @@ forecast_var_lasso(y, h = 1, model = NULL, p = 1, struct = "OwnOther",
 \item{model}{estimated VAR-lasso model. If missing will be estimated automatically.}
 
 \item{p}{number of lags}
+
+\item{scale}{logical, If TRUE then time series are scaled to mean = 0 and sd = 1 before estimation.
+Forecasts are scaled back to original mean and sd.}
 
 \item{struct}{type of VAR-lasso}
 
