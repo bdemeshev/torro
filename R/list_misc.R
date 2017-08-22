@@ -99,3 +99,103 @@ shifts_to_samples <- function(shifts) {
            sample_name = paste0(shift_name, "_", shift_no))
   return(samples)
 }
+
+
+#' Get parameter column names
+#' 
+#' \code{get_parameter_colnames} gets parameter column names from fits_long data frame.
+#' 
+#' Variable "h" is considered as parameter. Just takes column names of fits_long and
+#' removes column names used to identify model, shift, sample etc. 
+#' One row of fits_long is sufficient as function works only with column names.
+#'  
+#' @param fits_long data frame with models to estimate.
+#' @param redundant vector of column names NOT corresponding to parameters. 
+#' If NULL then built-in vector is used.
+#' @return vector of column names corresponding to parameters of models. 
+#' @export
+#' @examples 
+#' fits_long <- tibble::tibble(h_required = c(TRUE, TRUE, FALSE, FALSE, FALSE),
+#'    h = c(1, 2, 1, 2, 3), params = c(1, 1, 2, 2, 5))
+#' get_parameter_colnames(fits_long)
+get_parameter_colnames <- function(fits_long, redundant = NULL) {
+  if (is.null(redundant)) {
+    redundant <- c("shift_name", "shift_T_start", "win_expanding", "win_start_length", 
+    "n_shifts", "shift_no", "T_end", "T_start", "sample_name", "model_type", 
+    "model_args", "h_required", "comment", "var_set", "pars_id", 
+    "expand_window_by", "result", "model_filename", "T_start_lower")
+  }
+  parameter_colnames <- setdiff(colnames(fits_long), redundant)
+  return(parameter_colnames)
+}
+
+
+#' Try to estimate and forecast particular request
+#' 
+#' \code{forecast_one_fit} takes one row of fits_long and tries to forecast with corresponding model.
+#' To protect against possible errors with complex models \code{try} is used.
+#' 
+#' Does not use parallel computations. 
+#'  
+#' @param fit_row one row from data frame with models to estimate.
+#' @param var_sets data frame with variable names. Should contain at least two columns: 
+#' \code{var_set} name of a set, 
+#' \code{variable} names of the variables in the set.
+#' @param ts_data multivariate time series
+#' @param redundant vector of column names NOT corresponding to parameters. 
+#' If NULL then built-in vector is used. See \code{get_parameter_colnames}.
+#' @return forecasts from estimated model or \code{try-error} class 
+#' @export
+#' @examples 
+#' # TODO
+forecast_one_fit <- function(fit_row, var_sets,
+                             ts_data = torro::rus_macro, redundant = NULL) {
+  var_set <- NULL # black magic to remove NOTE from R CMD check
+  
+  parameter_colnames <- get_parameter_colnames(fit_row, redundant = redundant)
+  parameters <- fit_row[, parameter_colnames]
+  
+  # remove NA parameters that are not required for actual fit:
+  parameters <- as.list(parameters[, as.vector(!is.na(parameters[1, ]))])
+  # concatenate two granularity parameters in one vector:
+  if (fit_row$model_type == "var_lasso")  {
+    parameters <- granularity_to_vector(parameters)
+    parameters$type <- ifelse(fit_row$h_required, "honest", "fast")
+  }
+  if (!fit_row$h_required) {
+    parameters$h <- NULL
+  }
+  
+  forecast_fun_name <- paste0("forecast", "_", fit_row$model_type)
+  forecast_fun <- eval(parse(text = forecast_fun_name))
+  
+  vars <- dplyr::filter(var_sets, var_set == fit_row$var_set)$variable
+  y <- ts_data[(fit_row$T_start_lower):fit_row$T_end, vars]
+  parameters$y <- y
+  
+  attempt <- try(do.call(forecast_fun, parameters))
+  
+  return(attempt)
+}
+
+
+#' Extract message from forecasting attempt
+#' 
+#' \code{attempt_to_status} extracts error message from estimation attempt.
+#' 
+#' Gives "OK" if attempt was successful. 
+#'  
+#' @param attempt estimation attempt.
+#' @return character message
+#' @export
+#' @examples 
+#' # TODO
+attempt_to_status <- function(attempt) {
+  if ("try-error" %in% class(attempt)) {
+    status <- as.character(attempt) 
+  } else {
+    status <- "OK"
+  }
+  return(status)
+}
+

@@ -4,12 +4,15 @@
 \alias{scale_to}
 \title{Scale multivariate time series to specific means and standard deviations}
 \usage{
-scale_to(y, mu_sd = NULL)
+scale_to(y, mu_sd = NULL, dirty_scale = FALSE)
 }
 \arguments{
 \item{y}{multivariate time series to be scales}
 
 \item{mu_sd}{tibble with three columns: variable, mean, sd}
+
+\item{dirty_scale}{logical, if TRUE then the series is assumed having mean = 0 and sd = 1,
+and is just multiplied by sd and augmented by mean.}
 }
 \value{
 scaled mutlivatiate time series
