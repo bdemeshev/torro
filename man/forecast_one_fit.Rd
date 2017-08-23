@@ -30,5 +30,7 @@ To protect against possible errors with complex models \code{try} is used.
 Does not use parallel computations.
 }
 \examples{
-# TODO
+fits_long_toy <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy)
+fit_row <- fits_long_toy[1, ]
+attempt <- forecast_one_fit(fit_row, var_sets)
 }

@@ -26,5 +26,5 @@ Basically it is external product of \code{samples}, \code{var_sets} and \code{ho
 creation of columns \code{result}, \code{model_filename}, \code{T_start_lower}.
 }
 \examples{
-# TODO
+fits_long_toy <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy)
 }

@@ -30,5 +30,8 @@ fits_long with estimation messages for each requested model.
 Just do it.
 }
 \examples{
-# TODO
+fits_long_toy <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy)
+fits_long_very_toy <- fits_long_toy[1:2, ]
+res <- forecast_all(fits_long_very_toy, var_sets_toy, ncores = 1,
+    basefolder = tempdir())
 }

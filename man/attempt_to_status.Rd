@@ -19,5 +19,8 @@ character message
 Gives "OK" if attempt was successful.
 }
 \examples{
-# TODO
+fits_long_toy <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy)
+fit_row <- fits_long_toy[1, ]
+attempt <- forecast_one_fit(fit_row, var_sets)
+attempt_to_status(attempt)
 }

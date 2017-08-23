@@ -147,7 +147,9 @@ get_parameter_colnames <- function(fits_long, redundant = NULL) {
 #' @return forecasts from estimated model or \code{try-error} class 
 #' @export
 #' @examples 
-#' # TODO
+#' fits_long_toy <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy)
+#' fit_row <- fits_long_toy[1, ]
+#' attempt <- forecast_one_fit(fit_row, var_sets)
 forecast_one_fit <- function(fit_row, var_sets,
                              ts_data = torro::rus_macro, redundant = NULL) {
   var_set <- NULL # black magic to remove NOTE from R CMD check
@@ -189,7 +191,10 @@ forecast_one_fit <- function(fit_row, var_sets,
 #' @return character message
 #' @export
 #' @examples 
-#' # TODO
+#' fits_long_toy <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy)
+#' fit_row <- fits_long_toy[1, ]
+#' attempt <- forecast_one_fit(fit_row, var_sets)
+#' attempt_to_status(attempt)
 attempt_to_status <- function(attempt) {
   if ("try-error" %in% class(attempt)) {
     status <- as.character(attempt) 
@@ -214,7 +219,10 @@ attempt_to_status <- function(attempt) {
 #' @return fits_long with estimation messages for each requested model.
 #' @export
 #' @examples 
-#' # TODO
+#' fits_long_toy <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy)
+#' fits_long_very_toy <- fits_long_toy[1:2, ]
+#' res <- forecast_all(fits_long_very_toy, var_sets_toy, ncores = 1,
+#'     basefolder = tempdir())
 forecast_all <- function(fits_long, var_sets, ncores = 1, 
                          basefolder, log_file = "estim_log.txt", ...) {
   dir.create(paste0(basefolder, "/fits"), recursive = TRUE)
@@ -258,7 +266,7 @@ forecast_all <- function(fits_long, var_sets, ncores = 1,
 #' @return fits_long data frame
 #' @export
 #' @examples 
-#' # TODO
+#' fits_long_toy <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy)
 create_fits_long <- function(shifts, models, var_sets, horizons) {
   # black magic to remove NOTE in R CMD check
   T_start <- expand_window_by <- T_start <- NULL 
@@ -272,7 +280,32 @@ create_fits_long <- function(shifts, models, var_sets, horizons) {
 
   # add model_filename (used as id) just before cycle
   fits_long <-  dplyr::mutate(fits_long, result = "Non-estimated",
-                        model_filename = paste0("fit_", dplyr::row_number(), ".Rds"),
+                        model_filename = paste0("fit_", row_number(), ".Rds"),
                         T_start_lower = T_start - expand_window_by)
   return(fits_long)
 }
+
+
+
+#' Recover estimation status from fit file 
+#' 
+#' \code{get_status_from_fit_file} recovers estimation status from fit file.
+#' 
+#' Recovers estimation status from fit file.
+#'  
+#' @param basefolder folder with subfolder fits with fit files.
+#' @param fit_file_name the name of fit file.
+#' @return status message.
+#' @export
+#' @examples 
+#' get_status_from_fit_file(tempdir(), "fit_42.Rds")
+get_status_from_fit_file <- function(basefolder, fit_file_name) {
+  full_fit_file_path <- paste0(basefolder, "/fits/", fit_file_name)
+  if (!file.exists(full_fit_file_path)) {
+    status <- "Non-estimated"
+  } else {
+    attempt <- readr::read_rds(full_fit_file_path)
+    status <- attempt_to_status(attempt)
+  }
+  return(status)
+} 
