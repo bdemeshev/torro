@@ -242,3 +242,37 @@ forecast_all <- function(fits_long, var_sets, ncores = 1,
   
   return(fits_long)
 }
+
+
+#' Create fits_long data frame
+#' 
+#' \code{create_fits_long} creates fits_long data frame.
+#' 
+#' Basically it is external product of \code{samples}, \code{var_sets} and \code{horizons} data frames plus 
+#' creation of columns \code{result}, \code{model_filename}, \code{T_start_lower}.
+#'  
+#' @param shifts shifts data frame
+#' @param var_sets var_sets data frame
+#' @param models models data frame 
+#' @param horizons horizons data frame
+#' @return fits_long data frame
+#' @export
+#' @examples 
+#' # TODO
+create_fits_long <- function(shifts, models, var_sets, horizons) {
+  # black magic to remove NOTE in R CMD check
+  T_start <- expand_window_by <- T_start <- NULL 
+  
+  samples <- shifts_to_samples(shifts)
+
+  fits <- tidyr::crossing(samples, models, var_set = var_sets$var_set, horizons)
+  fits_long <- tidyr::unnest(fits) 
+
+  fits_long <- set_agnostic_max_h(fits_long)
+
+  # add model_filename (used as id) just before cycle
+  fits_long <-  dplyr::mutate(fits_long, result = "Non-estimated",
+                        model_filename = paste0("fit_", dplyr::row_number(), ".Rds"),
+                        T_start_lower = T_start - expand_window_by)
+  return(fits_long)
+}
