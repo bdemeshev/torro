@@ -186,12 +186,10 @@ forecast_var_lasso <- function(y, h = 1, model = NULL, p = 1, scale = TRUE,
     }
     
     for (i in 1:h) {
-      cat("  forecast for h = ", i, " started...\n")
       forecast_matrix[i, ] <- 
         as.vector(BigVAR::predict(model, n.ahead = i))
       # as.vector нужен так как predict для n.ahead = 1 возвращает строку
       # а для n.ahead > 1 возвращает столбец
-      cat(" forecast for h = ", i, " done.\n")
     }
   }
   
@@ -218,8 +216,7 @@ forecast_var_lasso <- function(y, h = 1, model = NULL, p = 1, scale = TRUE,
     
     # forecast 
     for (i in 1:length(h)) {
-      cat("  forecast for h = ", h[i], " started...\n")
-      
+
       if (length(model) > 1) {
         # separate model for each h
         model_i <- model[[i]]
@@ -231,7 +228,6 @@ forecast_var_lasso <- function(y, h = 1, model = NULL, p = 1, scale = TRUE,
         as.vector(BigVAR::predict(model_i, n.ahead = h[i]))
       # as.vector нужен так как predict для n.ahead = 1 возвращает строку
       # а для n.ahead > 1 возвращает столбец
-      cat("  forecast for h = ", h[i], " done.\n")
     }
   }
   

@@ -199,3 +199,46 @@ attempt_to_status <- function(attempt) {
   return(status)
 }
 
+#' Forecast all requested models
+#' 
+#' \code{forecast_all} forecasts all requested models.
+#' 
+#' Just do it.
+#'  
+#' @param fits_long data frame with requested models
+#' @param var_sets correspondance between variable sets and variable names
+#' @param ncores number of cores used. Just ignored.
+#' @param ... further arguments passet to \code{forecast_one_fit}
+#' @param basefolder path to folder where results are stored
+#' @param log_file the name of log file
+#' @return fits_long with estimation messages for each requested model.
+#' @export
+#' @examples 
+#' # TODO
+forecast_all <- function(fits_long, var_sets, ncores = 1, 
+                         basefolder, log_file = "estim_log.txt", ...) {
+  dir.create(paste0(basefolder, "/fits"), recursive = TRUE)
+  
+  full_path_to_log_file <- paste0(basefolder, "/", log_file)
+  
+  for (fit_no in 1:nrow(fits_long)) {
+    fit_row <- fits_long[fit_no, ]
+    
+    message_1 <- utils::timestamp(quiet = TRUE)
+    message_2 <- paste0("Processing fit no ", fit_no, " out of ", nrow(fits_long), "\n")
+    message_3 <- paste0("Model type: ", fit_row$model_type, "\n")
+    cat(message_1, file = full_path_to_log_file)
+    cat(message_2, file = full_path_to_log_file)
+    cat(message_3, file = full_path_to_log_file)
+    
+    
+    attempt <- forecast_one_fit(fit_row, var_sets, ...)
+    fits_long$result[fit_no] <- attempt_to_status(attempt)
+    if (fits_long$result[fit_no] == "OK") {
+      readr::write_rds(attempt, path = paste0(basefolder, "/fits/", fit_row$model_filename))  
+    }
+    readr::write_rds(fits_long, path = paste0(basefolder, "/fits_long.Rds"))
+  }
+  
+  return(fits_long)
+}
