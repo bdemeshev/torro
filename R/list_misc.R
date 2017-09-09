@@ -215,10 +215,11 @@ attempt_to_status <- function(attempt) {
 #' @param additional_message additional message
 #' @return message message 
 #' @export
-#' @examples 
-#' log_message <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy)
+#' @examples
+#' fits_long_toy <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy) 
+#' log_message(fits_long_toy[1, ], tempfile(), "Hi, there!\n")
 log_message <- function(fit_row, full_path_to_log_file, additional_message = "") {
-  message_1 <- utils::timestamp(quiet = TRUE)
+  message_1 <- paste0(utils::timestamp(quiet = TRUE), "\n")
   message_2 <- additional_message
   message_3 <- paste0("Model type: ", fit_row$model_type, "\n")
   message <- paste0(message_1, message_2, message_3)
@@ -260,7 +261,7 @@ forecast_all <- function(fits_long, var_sets, n_cores = 1,
   
   full_path_to_log_file <- paste0(basefolder, "/", log_file)
   
-  cluster <- parallel::makeCluster(n_cores, outfile = log_file)
+  cluster <- parallel::makeCluster(n_cores, outfile = full_path_to_log_file)
   doParallel::registerDoParallel(cluster)
   
   # additional functions/data to pass for each cluster:
