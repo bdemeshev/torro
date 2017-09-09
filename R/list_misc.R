@@ -222,7 +222,7 @@ log_message <- function(fit_row, full_path_to_log_file, additional_message = "")
   message_2 <- additional_message
   message_3 <- paste0("Model type: ", fit_row$model_type, "\n")
   message <- paste0(message_1, message_2, message_3)
-  cat(message, file = full_path_to_log_file)
+  cat(message, file = full_path_to_log_file, append = TRUE)
   return(message)
 }
 
@@ -234,6 +234,8 @@ log_message <- function(fit_row, full_path_to_log_file, additional_message = "")
 #' Just do it. This function may take a long time. If you stop it, you may
 #' recover estimation status (column `result` in fits_long) from written fit files
 #' using \code{get_status_from_fit_files()}. 
+#' It is better to clear basefolder before estimation process. 
+#' The function will just overwrite old `.Rds` files in case of name clash.
 #'  
 #' @param fits_long data frame with requested models
 #' @param var_sets correspondance between variable sets and variable names
