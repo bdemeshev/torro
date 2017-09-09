@@ -258,13 +258,11 @@ forecast_all <- function(fits_long, var_sets, n_cores = 1,
   
   full_path_to_log_file <- paste0(basefolder, "/", log_file)
   
-  message("This function may take a long time.")
-  message("If you stop it")
-  
   cluster <- parallel::makeCluster(n_cores, outfile = log_file)
   doParallel::registerDoParallel(cluster)
   
-  export_functions <- c("fits_long")
+  # additional functions/data to pass for each cluster:
+  export_functions <- NULL # NULL for nothing 
   export_packages <- c("readr", "forecast", "BigVAR", "dplyr", "torro")
   
   # strange dirty hack from 
