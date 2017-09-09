@@ -4,7 +4,7 @@
 \alias{forecast_all}
 \title{Forecast all requested models}
 \usage{
-forecast_all(fits_long, var_sets, ncores = 1, basefolder,
+forecast_all(fits_long, var_sets, n_cores = 1, basefolder,
   log_file = "estim_log.txt", ...)
 }
 \arguments{
@@ -12,7 +12,7 @@ forecast_all(fits_long, var_sets, ncores = 1, basefolder,
 
 \item{var_sets}{correspondance between variable sets and variable names}
 
-\item{ncores}{number of cores used. Just ignored.}
+\item{n_cores}{number of cores used. Just ignored.}
 
 \item{basefolder}{path to folder where results are stored}
 
@@ -27,11 +27,13 @@ fits_long with estimation messages for each requested model.
 \code{forecast_all} forecasts all requested models.
 }
 \details{
-Just do it.
+Just do it. This function may take a long time. If you stop it, you may
+recover estimation status (column `result` in fits_long) from written fit files
+using \code{get_status_from_fit_files()}.
 }
 \examples{
 fits_long_toy <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy)
 fits_long_very_toy <- fits_long_toy[1:2, ]
-res <- forecast_all(fits_long_very_toy, var_sets_toy, ncores = 1,
+res <- forecast_all(fits_long_very_toy, var_sets_toy, n_cores = 1,
     basefolder = tempdir())
 }

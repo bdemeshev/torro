@@ -18,8 +18,5 @@ status message.
 \code{get_status_from_fit_file} recovers estimation status from fit file.
 }
 \details{
-Recovers estimation status from fit file.
-}
-\examples{
-get_status_from_fit_file(tempdir(), "fit_42.Rds")
+Recovers estimation status from one fit file.
 }

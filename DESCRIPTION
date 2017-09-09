@@ -16,6 +16,7 @@ Imports:
   bvarsv (>= 1.1),
   purrr (>= 0.2.2.2),
   doParallel (>= 1.0.10),
+  foreach (>= 1.4.3),
   readr (>= 1.1.1),
   tidyr (>= 0.6.3)
 License: GPL-3

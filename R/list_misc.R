@@ -204,15 +204,40 @@ attempt_to_status <- function(attempt) {
   return(status)
 }
 
+#' Log message for boring estimation
+#' 
+#' Message is returned and (possibly) written to file.
+#' 
+#' May include additional message.
+#'  
+#' @param fit_row one row data.frame with at least model_type column
+#' @param full_path_to_log_file maybe empty
+#' @param additional_message additional message
+#' @return message message 
+#' @export
+#' @examples 
+#' log_message <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy)
+log_message <- function(fit_row, full_path_to_log_file, additional_message = "") {
+  message_1 <- utils::timestamp(quiet = TRUE)
+  message_2 <- additional_message
+  message_3 <- paste0("Model type: ", fit_row$model_type, "\n")
+  message <- paste0(message_1, message_2, message_3)
+  cat(message, file = full_path_to_log_file)
+  return(message)
+}
+
+
 #' Forecast all requested models
 #' 
 #' \code{forecast_all} forecasts all requested models.
 #' 
-#' Just do it.
+#' Just do it. This function may take a long time. If you stop it, you may
+#' recover estimation status (column `result` in fits_long) from written fit files
+#' using \code{get_status_from_fit_files()}. 
 #'  
 #' @param fits_long data frame with requested models
 #' @param var_sets correspondance between variable sets and variable names
-#' @param ncores number of cores used. Just ignored.
+#' @param n_cores number of cores used. Just ignored.
 #' @param ... further arguments passet to \code{forecast_one_fit}
 #' @param basefolder path to folder where results are stored
 #' @param log_file the name of log file
@@ -221,33 +246,59 @@ attempt_to_status <- function(attempt) {
 #' @examples 
 #' fits_long_toy <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy)
 #' fits_long_very_toy <- fits_long_toy[1:2, ]
-#' res <- forecast_all(fits_long_very_toy, var_sets_toy, ncores = 1,
+#' res <- forecast_all(fits_long_very_toy, var_sets_toy, n_cores = 1,
 #'     basefolder = tempdir())
-forecast_all <- function(fits_long, var_sets, ncores = 1, 
+forecast_all <- function(fits_long, var_sets, n_cores = 1, 
                          basefolder, log_file = "estim_log.txt", ...) {
+  
+  # dirty hack to remove R CMD NOTE:
+  fit_no <- NULL 
+  
   dir.create(paste0(basefolder, "/fits"), recursive = TRUE)
   
   full_path_to_log_file <- paste0(basefolder, "/", log_file)
   
-  for (fit_no in 1:nrow(fits_long)) {
+  message("This function may take a long time.")
+  message("If you stop it")
+  
+  cluster <- parallel::makeCluster(n_cores, outfile = log_file)
+  doParallel::registerDoParallel(cluster)
+  
+  export_functions <- c("fits_long")
+  export_packages <- c("readr", "forecast", "BigVAR", "dplyr", "torro")
+  
+  # strange dirty hack from 
+  # https://stackoverflow.com/questions/30216613
+  `%go%` <- foreach::`%dopar%`
+  
+  # replace %dopar% by %do% for non-parallel version
+  estimation_result <- foreach::foreach(fit_no = 1:nrow(fits_long), 
+                   .export = export_functions, 
+                   .packages = export_packages,
+                   .combine = "c") %go% {
+                     
     fit_row <- fits_long[fit_no, ]
     
-    message_1 <- utils::timestamp(quiet = TRUE)
-    message_2 <- paste0("Processing fit no ", fit_no, " out of ", nrow(fits_long), "\n")
-    message_3 <- paste0("Model type: ", fit_row$model_type, "\n")
-    cat(message_1, file = full_path_to_log_file)
-    cat(message_2, file = full_path_to_log_file)
-    cat(message_3, file = full_path_to_log_file)
-    
+    additional_message <- paste0("Processing fit no ", fit_no, 
+                                 " out of ", nrow(fits_long), "\n")    
+    message <- log_message(fit_row, full_path_to_log_file, additional_message)
     
     attempt <- forecast_one_fit(fit_row, var_sets, ...)
-    fits_long$result[fit_no] <- attempt_to_status(attempt)
-    if (fits_long$result[fit_no] == "OK") {
+    
+    status <- attempt_to_status(attempt)
+    
+    if (status == "OK") {
       readr::write_rds(attempt, path = paste0(basefolder, "/fits/", fit_row$model_filename))  
     }
-    readr::write_rds(fits_long, path = paste0(basefolder, "/fits_long.Rds"))
+    
+    invisible(status)
   }
   
+  parallel::stopCluster(cluster)
+  
+  fits_long$result <- estimation_result 
+  
+  readr::write_rds(fits_long, path = paste0(basefolder, "/fits_long.Rds"))
   return(fits_long)
 }
 
@@ -269,7 +320,7 @@ forecast_all <- function(fits_long, var_sets, ncores = 1,
 #' fits_long_toy <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy)
 create_fits_long <- function(shifts, models, var_sets, horizons) {
   # black magic to remove NOTE in R CMD check
-  T_start <- expand_window_by <- T_start <- NULL 
+  T_start <- expand_window_by <- T_start <- row_number <- NULL 
   
   samples <- shifts_to_samples(shifts)
 
@@ -291,14 +342,11 @@ create_fits_long <- function(shifts, models, var_sets, horizons) {
 #' 
 #' \code{get_status_from_fit_file} recovers estimation status from fit file.
 #' 
-#' Recovers estimation status from fit file.
+#' Recovers estimation status from one fit file.
 #'  
 #' @param basefolder folder with subfolder fits with fit files.
 #' @param fit_file_name the name of fit file.
 #' @return status message.
-#' @export
-#' @examples 
-#' get_status_from_fit_file(tempdir(), "fit_42.Rds")
 get_status_from_fit_file <- function(basefolder, fit_file_name) {
   full_fit_file_path <- paste0(basefolder, "/fits/", fit_file_name)
   if (!file.exists(full_fit_file_path)) {
@@ -309,3 +357,23 @@ get_status_from_fit_file <- function(basefolder, fit_file_name) {
   }
   return(status)
 } 
+
+#' Recover estimation status from fit files 
+#' 
+#' \code{get_status_from_fit_files} recovers estimation status from fit file.
+#' 
+#' Recovers estimation status from fit files. 
+#' Vectorised version of \code{get_status_from_fit_file()}.
+#'  
+#' @param basefolder folder with subfolder fits with fit files.
+#' @param fit_file_name names of fit files.
+#' @return status messages.
+#' @export
+#' @examples 
+#' get_status_from_fit_files(tempdir(), c("fit_42.Rds", "fit_14.Rds"))
+get_status_from_fit_files <- function(basefolder, fit_file_name) {
+  status <- purrr::map_chr(fit_file_name, 
+                          ~get_status_from_fit_file(basefolder, .))
+  return(status)
+}
+
