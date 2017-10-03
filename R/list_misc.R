@@ -261,8 +261,10 @@ forecast_all <- function(fits_long, var_sets, n_cores = 1,
   
   full_path_to_log_file <- paste0(basefolder, "/", log_file)
   
-  cluster <- parallel::makeCluster(n_cores, outfile = full_path_to_log_file)
-  doParallel::registerDoParallel(cluster)
+  if (n_cores > 1) {
+    cluster <- parallel::makeCluster(n_cores, outfile = full_path_to_log_file)
+    doParallel::registerDoParallel(cluster)
+  }
   
   # additional functions/data to pass for each cluster:
   export_functions <- NULL # NULL for nothing 
@@ -270,9 +272,13 @@ forecast_all <- function(fits_long, var_sets, n_cores = 1,
   
   # strange dirty hack from 
   # https://stackoverflow.com/questions/30216613
-  `%go%` <- foreach::`%dopar%`
+  if (n_cores > 1) {
+    `%go%` <- foreach::`%dopar%`
+  } else {
+    # replace %dopar% by %do% for non-parallel version
+    `%go%` <- foreach::`%do%`
+  }
   
-  # replace %dopar% by %do% for non-parallel version
   estimation_result <- foreach::foreach(fit_no = 1:nrow(fits_long), 
                    .export = export_functions, 
                    .packages = export_packages,
@@ -295,7 +301,9 @@ forecast_all <- function(fits_long, var_sets, n_cores = 1,
     invisible(status)
   }
   
-  parallel::stopCluster(cluster)
+  if (n_cores > 1) {
+    parallel::stopCluster(cluster)
+  }
   
   fits_long$result <- estimation_result 
   
