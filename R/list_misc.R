@@ -264,45 +264,57 @@ forecast_all <- function(fits_long, var_sets, n_cores = 1,
   if (n_cores > 1) {
     cluster <- parallel::makeCluster(n_cores, outfile = full_path_to_log_file)
     doParallel::registerDoParallel(cluster)
-  }
+
+    # additional functions/data to pass for each cluster:
+    export_functions <- NULL # NULL for nothing 
+    export_packages <- c("readr", "forecast", "BigVAR", "dplyr", "torro")
   
-  # additional functions/data to pass for each cluster:
-  export_functions <- NULL # NULL for nothing 
-  export_packages <- c("readr", "forecast", "BigVAR", "dplyr", "torro")
-  
-  # strange dirty hack from 
-  # https://stackoverflow.com/questions/30216613
-  if (n_cores > 1) {
+    # strange dirty hack from 
+    # https://stackoverflow.com/questions/30216613
     `%go%` <- foreach::`%dopar%`
-  } else {
-    # replace %dopar% by %do% for non-parallel version
-    `%go%` <- foreach::`%do%`
-  }
-  
-  estimation_result <- foreach::foreach(fit_no = 1:nrow(fits_long), 
+
+    estimation_result <- foreach::foreach(fit_no = 1:nrow(fits_long), 
                    .export = export_functions, 
                    .packages = export_packages,
                    .combine = "c") %go% {
                      
-    fit_row <- fits_long[fit_no, ]
+      fit_row <- fits_long[fit_no, ]
     
-    additional_message <- paste0("Processing fit no ", fit_no, 
+      additional_message <- paste0("Processing fit no ", fit_no, 
                                  " out of ", nrow(fits_long), "\n")    
-    message <- log_message(fit_row, full_path_to_log_file, additional_message)
+      message <- log_message(fit_row, full_path_to_log_file, additional_message)
     
-    attempt <- forecast_one_fit(fit_row, var_sets, ...)
+      attempt <- forecast_one_fit(fit_row, var_sets, ...)
     
-    status <- attempt_to_status(attempt)
+      status <- attempt_to_status(attempt)
     
-    if (status == "OK") {
-      readr::write_rds(attempt, path = paste0(basefolder, "/fits/", fit_row$model_filename))  
+      if (status == "OK") {
+        readr::write_rds(attempt, path = paste0(basefolder, "/fits/", fit_row$model_filename))  
+      }
+    
+      invisible(status)
     }
-    
-    invisible(status)
-  }
   
-  if (n_cores > 1) {
     parallel::stopCluster(cluster)
+  } else {
+    # non-parallel version
+    estimation_result <- rep("", nrow(fits_long))
+    
+    for (fit_no in 1:nrow(fits_long)) {
+      fit_row <- fits_long[fit_no, ]
+      
+      additional_message <- paste0("Processing fit no ", fit_no, 
+                                   " out of ", nrow(fits_long), "\n")    
+      message <- log_message(fit_row, full_path_to_log_file, additional_message)
+      
+      attempt <- forecast_one_fit(fit_row, var_sets, ...)
+      
+      estimation_result[fit_no] <- attempt_to_status(attempt)
+      
+      if (estimation_result[fit_no] == "OK") {
+        readr::write_rds(attempt, path = paste0(basefolder, "/fits/", fit_row$model_filename))  
+      }
+    }
   }
   
   fits_long$result <- estimation_result 

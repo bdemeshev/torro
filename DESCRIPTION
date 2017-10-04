@@ -5,20 +5,19 @@ Authors@R: person("Boris", "Demeshev", email = "boris.demeshev@gmail.com", role 
 Description: What the package does (one paragraph).
 Depends: R (>= 3.4.0)
 Imports:
-  dplyr (>= 0.7.2),
-  forecast (>= 8.1),
+  dplyr,
+  purrr,
+  readr,
+  tibble,
+  tidyr,
+  forecast (>= 8.0),
   BigVAR (>= 1.0.2),
-  tibble (>= 1.1.0),
   reshape2 (>= 1.4.2),
-  ggplot2 (>= 2.2.1),
   vars (>= 1.5-2),
   zoo (>= 1.8-0),
   bvarsv (>= 1.1),
-  purrr (>= 0.2.2.2),
   doParallel (>= 1.0.10),
-  foreach (>= 1.4.3),
-  readr (>= 1.1.1),
-  tidyr (>= 0.6.3)
+  foreach (>= 1.4.3)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
