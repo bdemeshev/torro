@@ -4,12 +4,12 @@
 \alias{get_status_from_fit_file}
 \title{Recover estimation status from fit file}
 \usage{
-get_status_from_fit_file(basefolder, fit_file_name)
+get_status_from_fit_file(fit_file_name, basefolder)
 }
 \arguments{
-\item{basefolder}{folder with subfolder fits with fit files.}
-
 \item{fit_file_name}{the name of fit file.}
+
+\item{basefolder}{folder with subfolder fits with fit files.}
 }
 \value{
 status message.
@@ -18,5 +18,5 @@ status message.
 \code{get_status_from_fit_file} recovers estimation status from fit file.
 }
 \details{
-Recovers estimation status from one fit file.
+Recovers estimation status from one fit file. Internal function.
 }

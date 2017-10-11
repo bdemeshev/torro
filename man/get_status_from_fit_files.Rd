@@ -4,12 +4,12 @@
 \alias{get_status_from_fit_files}
 \title{Recover estimation status from fit files}
 \usage{
-get_status_from_fit_files(basefolder, fit_file_name)
+get_status_from_fit_files(fit_file_name, basefolder)
 }
 \arguments{
-\item{basefolder}{folder with subfolder fits with fit files.}
+\item{fit_file_name}{fit file names.}
 
-\item{fit_file_name}{names of fit files.}
+\item{basefolder}{folder with subfolder fits with fit files.}
 }
 \value{
 status messages.
@@ -22,5 +22,5 @@ Recovers estimation status from fit files.
 Vectorised version of \code{get_status_from_fit_file()}.
 }
 \examples{
-get_status_from_fit_files(tempdir(), c("fit_42.Rds", "fit_14.Rds"))
+get_status_from_fit_files(c("fit_42.Rds", "fit_14.Rds"), tempdir())
 }

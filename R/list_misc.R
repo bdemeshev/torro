@@ -123,7 +123,7 @@ get_parameter_colnames <- function(fits_long, redundant = NULL) {
     redundant <- c("shift_name", "shift_T_start", "win_expanding", "win_start_length", 
     "n_shifts", "shift_no", "T_end", "T_start", "sample_name", "model_type", 
     "model_args", "h_required", "comment", "var_set", "pars_id", 
-    "expand_window_by", "result", "model_filename", "T_start_lower")
+    "expand_window_by", "result", "model_filename", "T_start_lower", "border_optimum")
   }
   parameter_colnames <- setdiff(colnames(fits_long), redundant)
   return(parameter_colnames)
@@ -154,6 +154,8 @@ forecast_one_fit <- function(fit_row, var_sets,
                              ts_data = torro::rus_macro, redundant = NULL) {
   var_set <- NULL # black magic to remove NOTE from R CMD check
   
+  
+  # do not pass what is not a parameter 
   parameter_colnames <- get_parameter_colnames(fit_row, redundant = redundant)
   parameters <- fit_row[, parameter_colnames]
   
@@ -170,6 +172,10 @@ forecast_one_fit <- function(fit_row, var_sets,
   
   forecast_fun_name <- paste0("forecast", "_", fit_row$model_type)
   forecast_fun <- eval(parse(text = forecast_fun_name))
+  forecast_fun_args <- names(formals(forecast_fun))
+  
+  # do not pass what is not a parameter 
+  parameters <- parameters[base::intersect(names(parameters), forecast_fun_args)]
   
   vars <- dplyr::filter(var_sets, var_set == fit_row$var_set)$variable
   y <- ts_data[(fit_row$T_start_lower):fit_row$T_end, vars]
@@ -363,12 +369,12 @@ create_fits_long <- function(shifts, models, var_sets, horizons) {
 #' 
 #' \code{get_status_from_fit_file} recovers estimation status from fit file.
 #' 
-#' Recovers estimation status from one fit file.
+#' Recovers estimation status from one fit file. Internal function.
 #'  
 #' @param basefolder folder with subfolder fits with fit files.
 #' @param fit_file_name the name of fit file.
 #' @return status message.
-get_status_from_fit_file <- function(basefolder, fit_file_name) {
+get_status_from_fit_file <- function(fit_file_name, basefolder) {
   full_fit_file_path <- paste0(basefolder, "/fits/", fit_file_name)
   if (!file.exists(full_fit_file_path)) {
     status <- "Non-estimated"
@@ -387,14 +393,83 @@ get_status_from_fit_file <- function(basefolder, fit_file_name) {
 #' Vectorised version of \code{get_status_from_fit_file()}.
 #'  
 #' @param basefolder folder with subfolder fits with fit files.
-#' @param fit_file_name names of fit files.
+#' @param fit_file_name fit file names.
 #' @return status messages.
 #' @export
 #' @examples 
-#' get_status_from_fit_files(tempdir(), c("fit_42.Rds", "fit_14.Rds"))
-get_status_from_fit_files <- function(basefolder, fit_file_name) {
+#' get_status_from_fit_files(c("fit_42.Rds", "fit_14.Rds"), tempdir())
+get_status_from_fit_files <- function(fit_file_name, basefolder) {
   status <- purrr::map_chr(fit_file_name, 
-                          ~get_status_from_fit_file(basefolder, .))
+                          ~get_status_from_fit_file(., basefolder))
   return(status)
 }
 
+
+
+#' Check whether BigVAR LASSO optimum landed at border
+#' 
+#' \code{is_optimum_at_border} checks whether BigVAR LASSO optimum landed at border.
+#' 
+#' Takes mforecast objects, extracts model.
+#' Than checks whether optimum is equal to the minimal lambda considered.
+#' Returns FALSE for non BigVAR LASSO models.
+#'  
+#' @param fit object of type mforecast.
+#' @return TRUE/FALSE.
+#' @export
+#' @examples 
+#' fits_long_toy <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy)
+#' fit_row <- fits_long_toy[1, ]
+#' attempt <- forecast_one_fit(fit_row, var_sets)
+#' is_optimum_at_border(attempt)
+is_optimum_at_border <- function(fit) {
+  optimum_at_border <- FALSE
+  model <- fit$model
+  if (class(model) == "BigVAR.results") {
+    grid_length <- length(model@LambdaGrid)
+    optimal_lambda_index <- model@index
+    if (grid_length == optimal_lambda_index) {
+      optimum_at_border <- TRUE
+    }
+  }
+  return(optimum_at_border)
+}
+
+
+#' Get optimum at border flag from fit file 
+#' 
+#' \code{get_optimum_at_border_flag} gets optimum at border flag.
+#' 
+#' Recovers optimum at border flag from one fit file. Internal function.
+#'  
+#' @param basefolder folder with subfolder fits with fit files.
+#' @param fit_file_name the name of fit file.
+#' @return optimum at border flag, TRUE/FALSE.
+get_optimum_at_border_flag <- function(fit_file_name, basefolder) {
+  full_fit_file_path <- paste0(basefolder, "/fits/", fit_file_name)
+  if (!file.exists(full_fit_file_path)) {
+    optimum_at_border_flag <- FALSE
+  } else {
+    attempt <- readr::read_rds(full_fit_file_path)
+    optimum_at_border_flag <- is_optimum_at_border(attempt)
+  }
+  return(optimum_at_border_flag)
+} 
+
+#' Get optimum at border flags 
+#' 
+#' \code{get_optimum_at_border_flags} gets optimum at border flags.
+#' 
+#' Recovers optimum at border flags from fit files. 
+#'  
+#' @param basefolder folder with subfolder fits with fit files.
+#' @param fit_file_name fit file names.
+#' @return vector of TRUE/FALSE.
+#' @export
+#' @examples 
+#' get_optimum_at_border_flags(c("fit_42.Rds", "fit_14.Rds"), tempdir())
+get_optimum_at_border_flags <- function(fit_file_name, basefolder) {
+  optimum_at_border_flags <- purrr::map_chr(fit_file_name, 
+                           ~get_optimum_at_border_flag(., basefolder))
+  return(optimum_at_border_flags)
+}
