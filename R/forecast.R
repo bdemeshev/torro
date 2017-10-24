@@ -141,8 +141,8 @@ forecast_ets <- function(y, h = 1, model = NULL, ...) {
 #' \code{cv.BigVAR} function from \code{BigVAR} package is used
 #' 
 #' @param y multivariate time series
-#' @param h forecast horizon
-#' @param h_cv forecast horizon used for cross validation
+#' @param h forecast horizon. Will be used for cross-validation in honest type.
+#' @param h_cv forecast horizon used for cross validation. Will be used for cross-validation in fast type.
 #' @param p number of lags
 #' @param struct type of VAR-lasso
 #' @param gran granularity vector, If gran = (a, b) then cross-validation checks b values form lambda to lambda/a.

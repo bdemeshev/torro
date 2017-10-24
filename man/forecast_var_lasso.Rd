@@ -11,7 +11,7 @@ forecast_var_lasso(y, h = 1, model = NULL, p = 1, scale = TRUE,
 \arguments{
 \item{y}{multivariate time series}
 
-\item{h}{forecast horizon}
+\item{h}{forecast horizon. Will be used for cross-validation in honest type.}
 
 \item{model}{estimated VAR-lasso model. If missing will be estimated automatically.}
 
@@ -29,7 +29,7 @@ honest: cross-validation is repeated for each h, so h should be a vector.
 model should be missing or a list of the same length as h or the same model for all h.
 fast: do cross-validation for h_cv and than predict for each horizon from 1 to h.}
 
-\item{h_cv}{forecast horizon used for cross validation}
+\item{h_cv}{forecast horizon used for cross validation. Will be used for cross-validation in fast type.}
 
 \item{...}{further arguments passed to \code{cv.BigVAR} function}
 }

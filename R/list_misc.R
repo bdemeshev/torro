@@ -166,16 +166,21 @@ forecast_one_fit <- function(fit_row, var_sets,
     parameters <- granularity_to_vector(parameters)
     parameters$type <- ifelse(fit_row$h_required, "honest", "fast")
   }
-  if (!fit_row$h_required) {
-    parameters$h <- NULL
-  }
+  
+  # this is a bug!!! protection against passing h should be before the estimation
+  # if (!fit_row$h_required) {
+  #   parameters$h <- NULL
+  # }
   
   forecast_fun_name <- paste0("forecast", "_", fit_row$model_type)
   forecast_fun <- eval(parse(text = forecast_fun_name))
-  forecast_fun_args <- names(formals(forecast_fun))
+
   
-  # do not pass what is not a parameter 
-  parameters <- parameters[base::intersect(names(parameters), forecast_fun_args)]
+  # do not pass what is not a parameter
+  # bad protection! will remove what is passed in ...
+  # possible bug!!!!!
+  # forecast_fun_args <- names(formals(forecast_fun))
+  # parameters <- parameters[base::intersect(names(parameters), forecast_fun_args)]
   
   vars <- dplyr::filter(var_sets, var_set == fit_row$var_set)$variable
   y <- ts_data[(fit_row$T_start_lower):fit_row$T_end, vars]
