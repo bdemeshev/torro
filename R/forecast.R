@@ -416,9 +416,18 @@ reforecast_fit <- function(old_fit, new_h = 1) {
     new_fit <- old_fit
     n_series <- length(old_fit$forecast)
     for (i in 1:n_series) {
-      new_forecast <- forecast::forecast(old_fit$forecast[[i]]$model, h = new_h)
-      new_forecast$series <- old_fit$forecast[[i]]$series
-      new_fit$forecast[[i]] <- new_forecast
+      model <- old_fit$forecast[[i]]$model
+      if ("naive" %in% class(model)) { 
+        # special case of random walk (no real model)
+        new_forecast <- forecast::rwf(old_fit$forecast[[i]]$x, h = new_h)
+        new_forecast$series <- old_fit$forecast[[i]]$series
+        new_fit$forecast[[i]] <- new_forecast        
+      } else {
+        # auto.arima, ets
+        new_forecast <- forecast::forecast(model, h = new_h)
+        new_forecast$series <- old_fit$forecast[[i]]$series
+        new_fit$forecast[[i]] <- new_forecast
+      }
     }
   }
   return(new_fit)
