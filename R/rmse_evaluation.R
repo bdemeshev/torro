@@ -21,9 +21,8 @@ get_forecasts_from_fit_files <- function(fit_file_names = NULL, basefolder) {
     if ("mforecast" %in% class(one_fit)) {
       forecast_matrix <- mforecast_to_matrix(one_fit)
       forecast_tibble <- tibble::as.tibble(forecast_matrix)
-      forecast_tibble <- dplyr::mutate(forecast_tibble, 
-                                       row_number = dplyr::row_number(),
-                                       model_id = model_id)
+      forecast_tibble$model_id <- model_id
+      forecast_tibble$row_number <- 1:nrow(forecast_tibble)
       forecast_melted <- reshape2::melt(forecast_tibble, id.vars = c("row_number", "model_id"))
       all_forecasts <- dplyr::bind_rows(all_forecasts, forecast_melted)
     }

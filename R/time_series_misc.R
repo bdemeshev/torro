@@ -71,12 +71,16 @@ matrix_to_mforecast <- function(forecast_matrix, y_before,
   for (i in 1:m) {
     mforecast$forecast[[i]] <- list()
     
-    # frequency of plain matrices is equal to one
-    fors_freq <- stats::frequency(y_before[, i]) 
-    fors_start <- next_obs_time(y_before[, i])    
+    if (!"ts" %in% class(y_before)) {
+      y_before <- stats::ts(y_before)
+    }
     
     mforecast$forecast[[i]]$method <- method # method name
     mforecast$forecast[[i]]$x <- y_before[, i] # actual y before forecast period
+
+    # frequency of plain matrices is equal to one
+    fors_freq <- stats::frequency(y_before[, i]) 
+    fors_start <- next_obs_time(y_before[, i])    
     
     # forecasts with correct frequency and start:
     future_ts <- stats::ts(forecast_matrix[, i], start = fors_start, frequency = fors_freq)

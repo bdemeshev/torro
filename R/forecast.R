@@ -385,3 +385,44 @@ forecast_tvp_primiceri <- function(y, h = 1, model = NULL, level = c(80, 95), ..
 
 
 
+#' Reforecast mforecast object on new horizon
+#' 
+#' \code{reforecast_fit} reforecast mforecast object on new horizon.
+#' 
+#' Currently works for auto.arima, ets, fast version of bigvar_lasso.
+#' 
+#' @param old_fit mforecast object
+#' @param new_h new forecast horizon
+#' @return forecasts as mforecast object
+#' @export
+#' @examples 
+#' data(rus_macro)
+#' y_small <- rus_macro[, c("cpi", "employment", "m2")]
+#' var_lasso_forecast <- forecast_var_lasso(y_small, h = 2)
+#' var_lasso_reforecast <- reforecast_fit(var_lasso_forecast, new_h = 4)
+reforecast_fit <- function(old_fit, new_h = 1) {
+  # two versions: one model for all time series or one model for each time series
+  if ("model" %in% names(old_fit)) {
+    # one model for all time series
+    model <- old_fit$model
+    if (class(model) == "BigVAR.results") {
+      y <- model@Data
+      new_fit <- forecast_var_lasso(y = y, h = new_h, model = model) 
+    } else {
+      message("I am lazy, not implemented")
+    }
+  } else {
+    # one model for each time series
+    new_fit <- old_fit
+    n_series <- length(old_fit$forecast)
+    for (i in 1:n_series) {
+      new_forecast <- forecast::forecast(old_fit$forecast[[i]]$model, h = new_h)
+      new_forecast$series <- old_fit$forecast[[i]]$series
+      new_fit$forecast[[i]] <- new_forecast
+    }
+  }
+  return(new_fit)
+}
+
+
+
