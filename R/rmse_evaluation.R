@@ -30,9 +30,9 @@ get_forecasts_from_fit_files <- function(fit_file_names = NULL, basefolder) {
   return(all_forecasts)
 }
 
-#' Attach real y to all_forecasts data set.
+#' Attach real y and model information to all_forecasts data set.
 #'
-#' Add new column to all_forecasts with short model description and actual y.
+#' Add new columns to all_forecasts with short model description and actual y.
 #'
 #' Original all_forecasts contains row_number, model_id, variable and value columns.
 #' Using info from fits_long this function attach actual y.
@@ -41,8 +41,8 @@ get_forecasts_from_fit_files <- function(fit_file_names = NULL, basefolder) {
 #' @param fits_long tibble that contains T_end, model_type and model_filename columns
 #' @param y actual time series
 #' @export
-#' @return all_forecasts with new column
-attach_y_to_forecasts <- function(all_forecasts, fits_long, y) {
+#' @return all_forecasts with new columns: y_actual, var_set, pars_id...
+augment_forecasts <- function(all_forecasts, fits_long, y) {
   fits_long <- dplyr::mutate(fits_long,
                              model_id = as.numeric(stringr::str_extract(model_filename, "[0-9]+")))
   # dirty hack to remove notes in R CMD check
@@ -51,8 +51,10 @@ attach_y_to_forecasts <- function(all_forecasts, fits_long, y) {
   model_type <- NULL
   model_id <- NULL
   row_number <- NULL
+  var_set <- NULL
+  pars_id <- NULL
 
-  fits_long <- dplyr::select(fits_long, T_end, model_type, model_id)
+  fits_long <- dplyr::select(fits_long, T_end, model_type, model_id, var_set, pars_id)
   all_forecasts <- dplyr::left_join(all_forecasts, fits_long, by = "model_id")
   all_forecasts <- dplyr::mutate(all_forecasts, T_forecast = T_end + row_number)
   y <- dplyr::as_tibble(y)
@@ -66,5 +68,49 @@ attach_y_to_forecasts <- function(all_forecasts, fits_long, y) {
 }
 
 
+#' Calculate rmse and mae.
+#'
+#' Create summarising table with rmse and mae for each model.
+#'
+#' Further checks are needed!
+#'
+#' @param all_forecasts tibble that contains row_number, model_id, variable, value and y_actual
+#' @param fits_long tibble that contains pars_id, var_set and model_filename columns
+#' @param T_rmse_min first T to calculate rmse
+#' @param T_rmse_max last T to calculate rmse
+#' @export
+#' @return summary with rmse and mae for each model
+calculate_rmse <- function(all_forecasts, fits_long,
+                                  T_rmse_min = 133,
+                                  T_rmse_max = 243) {
+  # dirty hack to remove notes in R CMD check
+  model_filename <- NULL
+  model_id <- NULL
+  row_number <- NULL
+  var_set <- NULL
+  pars_id <- NULL
+  T_forecast <- NULL
+  y_actual <- NULL
+  value <- NULL
+  variable <- NULL
+  error_2 <- NULL
+  error_abs <- NULL
+  model_type <- NULL
+
+
+  all_f3 <- dplyr::filter(all_forecasts, T_forecast >= T_rmse_min, T_forecast <= T_rmse_max)
+
+  all_f3 <- dplyr::mutate(all_f3,
+                   error_2 = (value - y_actual)^2,
+                   error_abs = abs(value - y_actual))
+
+  rmse_table <- dplyr::summarise(dplyr::group_by(all_f3,
+          model_type, pars_id, row_number, variable, var_set),
+                     rmse = sqrt(mean(error_2)),
+                     mae = mean(error_abs))
+
+
+  return(rmse_table)
+}
 
 
