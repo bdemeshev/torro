@@ -16,7 +16,7 @@ get_forecasts_from_fit_files <- function(fit_file_names = NULL, basefolder) {
 
   all_forecasts <- NULL
   for (file_name in full_fit_file_path) {
-    model_id <- as.numeric(stringr::str_extract(file_name, "[0-9]+"))
+    model_id <- as.numeric(stringr::str_extract(basename(file_name), "[0-9]+"))
     one_fit <- readr::read_rds(file_name)
     if ("mforecast" %in% class(one_fit)) {
       forecast_matrix <- mforecast_to_matrix(one_fit)
