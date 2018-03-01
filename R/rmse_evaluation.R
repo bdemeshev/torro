@@ -96,6 +96,7 @@ calculate_rmse <- function(all_forecasts, fits_long,
   error_2 <- NULL
   error_abs <- NULL
   model_type <- NULL
+  mse <- NULL
 
 
   all_f3 <- dplyr::filter(all_forecasts, T_forecast >= T_rmse_min, T_forecast <= T_rmse_max)
@@ -106,11 +107,55 @@ calculate_rmse <- function(all_forecasts, fits_long,
 
   rmse_table <- dplyr::summarise(dplyr::group_by(all_f3,
           model_type, pars_id, row_number, variable, var_set),
-                     rmse = sqrt(mean(error_2)),
+                     mse = mean(error_2),
+                     rmse = sqrt(mse),
                      mae = mean(error_abs))
 
 
   return(rmse_table)
+}
+
+
+#' Transform absolute error measures to relative.
+#'
+#' Transform absolute error measures to relative.
+#'
+#' Transform absolute error measures to relative.
+#'
+#' @param rmse_table output of `calculate_rmse` function.
+#' Should contain columns: row_number /horizon/, variable, var_set, model_type, pars_id
+#' and some measures like mse, rmse etc
+#' @param the_model_type base model type
+#' @param the_pars_id base parameter set
+#' @export
+#' @return measure table with relative measures
+transform_to_relative_measure <- function(rmse_table,
+                                          the_model_type = "rw",
+                                          the_pars_id = "automatic") {
+  # dirty hack to remove notes in R CMD check
+  model_type <- NULL
+  pars_id <- NULL
+  value <- NULL
+  base_value <- NULL
+
+  rmse_table <- dplyr::ungroup(rmse_table)
+  rmse_table_long <- reshape2::melt(rmse_table,
+                                    id.vars = c("row_number", "variable", "var_set", "model_type", "pars_id"),
+                                    variable.name = "measure")
+  rmse_table_long_base <- dplyr::filter(rmse_table_long, model_type == the_model_type, the_pars_id == pars_id)
+  rmse_table_long_base <- dplyr::select(rmse_table_long_base, -model_type, -pars_id)
+  rmse_table_long_base <- dplyr::rename(rmse_table_long_base, base_value = value)
+
+
+  rmse_table_long_joined <- dplyr::left_join(rmse_table_long, rmse_table_long_base,
+                                             by = c("variable", "var_set", "row_number", "measure"))
+  rmse_table_long_joined <- dplyr::mutate(rmse_table_long_joined,
+                                          rel_value = value / base_value)
+  new_rmse_table <- reshape2::dcast(rmse_table_long_joined,
+                                    row_number + variable + var_set + model_type + pars_id ~ measure,
+                                    value.var = "rel_value")
+
+  return(new_rmse_table)
 }
 
 
