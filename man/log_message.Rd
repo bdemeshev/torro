@@ -23,6 +23,6 @@ Message is returned and (possibly) written to file.
 May include additional message.
 }
 \examples{
-fits_long_toy <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy) 
+fits_long_toy <- create_fits_long(shifts_toy, models_toy, var_sets_toy, horizons_toy)
 log_message(fits_long_toy[1, ], tempfile(), "Hi, there!\\n")
 }

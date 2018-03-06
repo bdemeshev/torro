@@ -9,7 +9,7 @@ set_agnostic_max_h(fits_long, ignored_vars = "model_filename")
 \arguments{
 \item{fits_long}{list of models to estimate}
 
-\item{ignored_vars}{names of variables that are ignored 
+\item{ignored_vars}{names of variables that are ignored
 when \code{set_agnostic_max_h} groups rows correponding to same model.}
 }
 \value{
@@ -19,8 +19,8 @@ shorter list of models to estimate
 \code{set_agnostic_max_h} sets maximal horizon for h-agnostic models.
 }
 \details{
-There are two types of models. Horizon agnostic that do not require horizon h for estimation (ARIMA, RW, ETS...). 
-Horizon gnostic models that require h both for estimation and forecasting (cross validated VAR-lasso, ...). 
+There are two types of models. Horizon agnostic that do not require horizon h for estimation (ARIMA, RW, ETS...).
+Horizon gnostic models that require h both for estimation and forecasting (cross validated VAR-lasso, ...).
 This function removes redundant estimation of h-agnostic models. If one requires estimation of h-agnostic
 model for h = 1, h = 2, h = 3 this function will leave only estimation of h = 3 in the request.
 List of models to estimate should contain at least

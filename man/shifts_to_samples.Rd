@@ -27,7 +27,7 @@ Transforms shifts data frame to samples data frame. Shifts data frame should con
 Samples data frame contains the same columns as shifts data frame plus three: T_start, T_end, sample_name.
 }
 \examples{
-shifts <- tibble::tribble(~shift_name, ~shift_T_start, ~win_expanding, 
-    ~win_start_length, ~n_shifts, "moving_120", 13, FALSE, 120, 2) 
+shifts <- tibble::tribble(~shift_name, ~shift_T_start, ~win_expanding,
+    ~win_start_length, ~n_shifts, "moving_120", 13, FALSE, 120, 2)
 shifts_to_samples(shifts)
 }

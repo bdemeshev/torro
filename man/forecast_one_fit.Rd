@@ -10,13 +10,13 @@ forecast_one_fit(fit_row, var_sets, ts_data = torro::rus_macro,
 \arguments{
 \item{fit_row}{one row from data frame with models to estimate.}
 
-\item{var_sets}{data frame with variable names. Should contain at least two columns: 
-\code{var_set} name of a set, 
+\item{var_sets}{data frame with variable names. Should contain at least two columns:
+\code{var_set} name of a set,
 \code{variable} names of the variables in the set.}
 
 \item{ts_data}{multivariate time series}
 
-\item{redundant}{vector of column names NOT corresponding to parameters. 
+\item{redundant}{vector of column names NOT corresponding to parameters.
 If NULL then built-in vector is used. See \code{get_parameter_colnames}.}
 }
 \value{

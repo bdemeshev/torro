@@ -29,8 +29,8 @@ fits_long with estimation messages for each requested model.
 \details{
 Just do it. This function may take a long time. If you stop it, you may
 recover estimation status (column `result` in fits_long) from written fit files
-using \code{get_status_from_fit_files()}. 
-It is better to clear basefolder before estimation process. 
+using \code{get_status_from_fit_files()}.
+It is better to clear basefolder before estimation process.
 The function will just overwrite old `.Rds` files in case of name clash.
 }
 \examples{

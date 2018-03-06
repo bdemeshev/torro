@@ -9,7 +9,7 @@ get_parameter_colnames(fits_long, redundant = NULL)
 \arguments{
 \item{fits_long}{data frame with models to estimate.}
 
-\item{redundant}{vector of column names NOT corresponding to parameters. 
+\item{redundant}{vector of column names NOT corresponding to parameters.
 If NULL then built-in vector is used.}
 }
 \value{
@@ -20,7 +20,7 @@ vector of column names corresponding to parameters of models.
 }
 \details{
 Variable "h" is considered as parameter. Just takes column names of fits_long and
-removes column names used to identify model, shift, sample etc. 
+removes column names used to identify model, shift, sample etc.
 One row of fits_long is sufficient as function works only with column names.
 }
 \examples{

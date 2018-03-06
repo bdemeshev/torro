@@ -22,7 +22,7 @@ fits_long data frame
 \code{create_fits_long} creates fits_long data frame.
 }
 \details{
-Basically it is external product of \code{samples}, \code{var_sets} and \code{horizons} data frames plus 
+Basically it is external product of \code{samples}, \code{var_sets} and \code{horizons} data frames plus
 creation of columns \code{result}, \code{model_filename}, \code{T_start_lower}.
 }
 \examples{

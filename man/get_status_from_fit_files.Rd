@@ -18,7 +18,7 @@ status messages.
 \code{get_status_from_fit_files} recovers estimation status from fit file.
 }
 \details{
-Recovers estimation status from fit files. 
+Recovers estimation status from fit files.
 Vectorised version of \code{get_status_from_fit_file()}.
 }
 \examples{
